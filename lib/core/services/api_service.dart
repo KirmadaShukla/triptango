@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'api_config.dart';
+import '../models/trip_model.dart';
 
 class ApiService {
   static Future<Response> login(String email, String password) async {
@@ -36,6 +37,18 @@ class ApiService {
         print(e);
       }
       rethrow;
+    }
+  }
+
+  static Future<List<TripModel>> getFeaturedTrips() async {
+    final response = await ApiConfig().getRequest('/trip/featured/');
+    final data = response.data;
+    if (data is List) {
+      return data.map((e) => TripModel.fromJson(e)).toList();
+    } else if (data is Map && data['results'] is List) {
+      return (data['results'] as List).map((e) => TripModel.fromJson(e)).toList();
+    } else {
+      return [];
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:triptango/features/auth/presentation/providers/auth_provider.dar
 import 'package:triptango/shared/widgets/app_snackbar.dart';
 import 'package:lottie/lottie.dart';
 import 'package:triptango/features/auth/presentation/pages/register_page.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -257,6 +258,7 @@ class _LoginFormState extends State<_LoginForm> {
                   );
                   if (provider.user != null) {
                     showAppSnackbar(context, 'Login successful!', SnackbarType.success);
+                    context.go('/home');
                   } else if (provider.errorMessage != null) {
                     showAppSnackbar(context, provider.errorMessage!, SnackbarType.error);
                   }
@@ -320,6 +322,7 @@ class _LoginFormState extends State<_LoginForm> {
                   await provider.signInWithGoogle();
                   if (provider.user != null) {
                     showAppSnackbar(context, 'Google login successful!', SnackbarType.success);
+                    context.go('/home');
                   } else if (provider.errorMessage != null) {
                     showAppSnackbar(context, provider.errorMessage!, SnackbarType.error);
                   }
@@ -390,6 +393,7 @@ class _GoogleLoginButton extends StatelessWidget {
               await provider.signInWithGoogle();
               if (provider.user != null) {
                 showAppSnackbar(context, 'Google login successful!', SnackbarType.success);
+                context.go('/home');
               } else if (provider.errorMessage != null) {
                 showAppSnackbar(context, provider.errorMessage!, SnackbarType.error);
               }
