@@ -47,6 +47,7 @@ dependencies:
   step_progress_indicator: any
   intl_phone_field: ^3.2.0
   country_state_city_pro: ^0.0.6
+  connectivity_plus: ^5.0.2
 
 dev_dependencies:
   flutter_test:
@@ -80,6 +81,10 @@ flutter:
   assets:
     - assets/icon/
     - assets/travel_the_world.json
+    - assets/travel_is_fun.json
+    - assets/success_tick.json
+    - assets/icon/app_icon.png
+    - assets/icon/google_icon.png
     - assets/
     - packages/country_state_city_pro/assets/country.json
   #   - images/a_dot_burr.jpeg

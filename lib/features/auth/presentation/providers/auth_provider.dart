@@ -9,6 +9,8 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   UserModel? _user;
+  bool _isLoginLoading = false;
+  bool _isGoogleLoading = false;
 
   // Registration controllers and state
   final TextEditingController nameController = TextEditingController();
@@ -58,9 +60,11 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   UserModel? get user => _user;
   bool get isLoggedIn => _user != null;
+  bool get isLoginLoading => _isLoginLoading;
+  bool get isGoogleLoading => _isGoogleLoading;
 
   Future<void> login(String email, String password) async {
-    _isLoading = true;
+    _isLoginLoading = true;
     _errorMessage = null;
     notifyListeners();
     try {
@@ -70,14 +74,14 @@ class AuthProvider extends ChangeNotifier {
         await prefs.setString('token', response.data['token']);
         await fetchUserProfile();
       } else {
-        _errorMessage = response.data['message'] ?? 'Login failed';
+        _errorMessage = response.data['error'] ?? 'Login failed';
       }
     } on DioException catch (e) {
-      _errorMessage = e.response?.data['message'] ?? 'Network error';
+      _errorMessage = e.response?.data['error'] ?? 'Network error';
     } catch (e) {
       _errorMessage = 'An unexpected error occurred';
     } finally {
-      _isLoading = false;
+      _isLoginLoading = false;
       notifyListeners();
     }
   }
@@ -111,31 +115,54 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signInWithGoogle() async {
-    _isLoading = true;
+    _isGoogleLoading = true;
     _errorMessage = null;
     notifyListeners();
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email'],
+        serverClientId: '1025954988698-l7pj6dqd6h5su5k0k1h7o94k4kic6rsh.apps.googleusercontent.com', // <-- Replace with your actual Web client ID
+      );
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
+        print('Google sign-in aborted by user');
         _errorMessage = 'Google sign-in aborted';
-        _isLoading = false;
+        _isGoogleLoading = false;
         notifyListeners();
         return;
       }
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      // Here you would send googleAuth.idToken or googleAuth.accessToken to your backend for verification and login/registration
-      // For demo, we'll just create a dummy user
-      _user = UserModel(
-        id: googleUser.id,
-        name: googleUser.displayName ?? 'Google User',
-        email: googleUser.email,
-        phone: '', // Google sign-in does not provide phone, so use empty string or prompt user later
-      );
-      _errorMessage = null;
-    } catch (e) {
+      print('Google User ID:  [${googleUser.id}');
+      print('Google User Name:  [${googleUser.displayName}');
+      print('Google User Email:  [${googleUser.email}');
+      print('Google ID Token:  [${googleAuth.idToken}');
+      print('Google Access Token:  [${googleAuth.accessToken}');
+      if (googleAuth.idToken == null) {
+        print('Google idToken is null!');
+        _errorMessage = 'Google sign-in failed: No idToken';
+        _isGoogleLoading = false;
+        notifyListeners();
+        return;
+      }
+      final response = await ApiService.googleLogin(googleAuth.idToken!);
+      print('Google login backend response:  [${response.data}');
+      if (response.statusCode == 200 && response.data != null) {
+        _user = UserModel(
+          id: googleUser.id,
+          name: response.data['name'] ?? googleUser.displayName ?? 'Google User',
+          email: response.data['email'] ?? googleUser.email,
+          phone: '',
+        );
+        _errorMessage = null;
+      } else {
+        _errorMessage = response.data['error'] ?? 'Google login failed';
+      }
+    } catch (e, stack) {
+      print('Google sign-in error: $e');
+      print('Stack trace: $stack');
       _errorMessage = 'Google sign-in failed';
     } finally {
-      _isLoading = false;
+      _isGoogleLoading = false;
       notifyListeners();
     }
   }
@@ -151,7 +178,7 @@ class AuthProvider extends ChangeNotifier {
     required String phone,
     required String password,
     String? bio,
-    String? interests,
+    String? interest,
     required Map<String, String> address,
   }) async {
     _isLoading = true;
@@ -164,18 +191,18 @@ class AuthProvider extends ChangeNotifier {
         phone: phone,
         password: password,
         bio: bio,
-        interests: interests,
+        interest: interest,
         address: address,
       );
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Optionally fetch user profile or set _user here
         return true;
       } else {
-        _errorMessage = response.data['message'] ?? 'Registration failed';
+        _errorMessage = response.data['error'] ?? 'Registration failed';
         return false;
       }
     } on DioException catch (e) {
-      _errorMessage = e.response?.data['message'] ?? 'Network error';
+      _errorMessage = e.response?.data['error'] ?? 'Network error';
       return false;
     } catch (e) {
       _errorMessage = 'An unexpected error occurred';

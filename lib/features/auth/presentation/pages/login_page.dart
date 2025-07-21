@@ -139,41 +139,6 @@ class _LoginScreenBody extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const _GoogleLoginButton(),
-                      const SizedBox(height: 16),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0, bottom: 32.0),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.92),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 8,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const RegisterPage()),
-                              );
-                            },
-                            child: const Text(
-                              'Don’t have an account? Sign Up',
-                              style: TextStyle(
-                                color: Color(0xFF2193b0),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -282,7 +247,7 @@ class _LoginFormState extends State<_LoginForm> {
           ),
         ),
         const SizedBox(height: 24),
-        provider.isLoading
+        provider.isLoginLoading
             ? const Center(child: CircularProgressIndicator(color: Color(0xFF2193b0)))
             : ElevatedButton(
                 onPressed: () async {
@@ -313,6 +278,78 @@ class _LoginFormState extends State<_LoginForm> {
                   ),
                 ),
               ),
+        const SizedBox(height: 16),
+        // Divider with 'or'
+        Row(
+          children: [
+            const Expanded(child: Divider(thickness: 1)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text('or', style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.w600)),
+            ),
+            const Expanded(child: Divider(thickness: 1)),
+          ],
+        ),
+        const SizedBox(height: 16),
+        provider.isGoogleLoading
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFF2193b0)))
+            : ElevatedButton.icon(
+                icon: Image.asset(
+                  'assets/icon/google_icon.png',
+                  height: 24,
+                  width: 24,
+                ),
+                label: const Text(
+                  'Sign in with Google',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black87,
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                ),
+                onPressed: () async {
+                  await provider.signInWithGoogle();
+                  if (provider.user != null) {
+                    showAppSnackbar(context, 'Google login successful!', SnackbarType.success);
+                  } else if (provider.errorMessage != null) {
+                    showAppSnackbar(context, provider.errorMessage!, SnackbarType.error);
+                  }
+                },
+              ),
+        // Sign up option at bottom right
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const RegisterPage()),
+              );
+            },
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.only(top: 8, right: 0, left: 0, bottom: 0),
+              minimumSize: Size(0, 0),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: const Text(
+              'Don’t have an account? Sign Up',
+              style: TextStyle(
+                color: Color(0xFF2193b0),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

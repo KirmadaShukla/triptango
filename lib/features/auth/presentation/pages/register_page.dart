@@ -10,6 +10,9 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:country_state_city_pro/country_state_city_pro.dart';
 import 'package:triptango/core/models/address_model.dart';
+import 'package:triptango/core/utils/network_utils.dart';
+import 'dart:convert'; // Added for jsonDecode
+import 'package:go_router/go_router.dart';
 
 class RegisterPage extends StatelessWidget {
   const RegisterPage({super.key});
@@ -61,6 +64,12 @@ class _RegisterScreenBodyState extends State<_RegisterScreenBody> {
   }
 
   void _submit() async {
+    bool connected = await NetworkUtils.isConnected();
+    print('Connected: $connected');
+    if (!connected) {
+      showAppSnackbar(context, 'No internet connection', SnackbarType.error);
+      return;
+    }
     final provider = Provider.of<AuthProvider>(context, listen: false);
     final address = Address(
       addressLine1: provider.addressLine1Controller.text.trim(),
@@ -79,7 +88,7 @@ class _RegisterScreenBodyState extends State<_RegisterScreenBody> {
         phone: provider.phoneController.text.trim(),
         password: provider.passwordController.text,
         bio: provider.bioController.text.trim().isNotEmpty ? provider.bioController.text.trim() : null,
-        interests: provider.selectedInterests.join(','),
+        interest: provider.selectedInterests.join(','),
         address: address.toJson().map((k, v) => MapEntry(k, v ?? '')),
       );
       if (success) {
@@ -88,12 +97,36 @@ class _RegisterScreenBodyState extends State<_RegisterScreenBody> {
           'Registration successful!',
           SnackbarType.success,
         );
-        Navigator.pushReplacementNamed(context, '/home');
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Center(
+            child: Lottie.asset(
+              'assets/success_tick.json',
+              repeat: false,
+              onLoaded: (composition) async {
+                await Future.delayed(composition.duration);
+                Navigator.of(context).pop(); // Close dialog
+                context.go('/home');
+              },
+            ),
+          ),
+        );
       } else {
         final error = provider.errorMessage ?? 'Registration failed';
+        // If the error message is a JSON string, try to parse and show a user-friendly message
+        String displayError = error;
+        try {
+          if (error.startsWith('{') && error.endsWith('}')) {
+            final decoded = jsonDecode(error);
+            if (decoded is Map && decoded['error'] != null) {
+              displayError = decoded['error'].toString();
+            }
+          }
+        } catch (_) {}
         showAppSnackbar(
           context,
-          error,
+          displayError,
           SnackbarType.error,
         );
       }
@@ -178,7 +211,20 @@ class _RegisterScreenBodyState extends State<_RegisterScreenBody> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const SizedBox(height: 32),
+                      // Step progress indicator
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: StepProgressIndicator(
+                          totalSteps: 3,
+                          currentStep: _currentStep + 1,
+                          selectedColor: Theme.of(context).colorScheme.primary,
+                          unselectedColor: Colors.grey[300]!,
+                          size: 8,
+                          roundedEdges: Radius.circular(10),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const SizedBox(height: 16),
                       Card(
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -286,309 +332,327 @@ class _RegisterScreenBodyState extends State<_RegisterScreenBody> {
 
   Widget _buildFormStep() {
     final provider = Provider.of<AuthProvider>(context);
-    return Column(
-      children: [
-        TextFormField(
-          controller: provider.nameController,
-          decoration: InputDecoration(
-            labelText: 'Name',
-            prefixIcon: Icon(Icons.person, color: Color(0xFF2193b0)),
-            filled: true,
-            fillColor: Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.grey, width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2193b0), width: 2),
-            ),
-          ),
-          validator: (value) => value == null || value.isEmpty ? 'Enter your name' : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: provider.emailController,
-          decoration: InputDecoration(
-            labelText: 'Email',
-            prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF2193b0)),
-            filled: true,
-            fillColor: Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.grey, width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2193b0), width: 2),
-            ),
-          ),
-          keyboardType: TextInputType.emailAddress,
-          validator: (value) {
-            if (value == null || value.isEmpty) return 'Enter your email';
-            // if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4} 24').hasMatch(value)) {
-            //   return 'Enter a valid email';
-            // }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-        IntlPhoneField(
-          controller: provider.phoneController,
-          decoration: InputDecoration(
-            labelText: 'Phone',
-            prefixIcon: Icon(Icons.phone, color: Color(0xFF2193b0)),
-            filled: true,
-            fillColor: Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.grey, width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2193b0), width: 2),
-            ),
-          ),
-          initialCountryCode: 'IN',
-          onChanged: (phone) {},
-          onSaved: (phone) {
-            if (phone != null && phone.number.isNotEmpty) {
-              provider.phoneController.text = phone.completeNumber;
-            } else {
-              provider.phoneController.clear();
-            }
-          },
-          validator: (value) {
-            if (value == null || value.number.isEmpty) return 'Enter your phone number';
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: provider.passwordController,
-          decoration: InputDecoration(
-            labelText: 'Password',
-            prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF2193b0)),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                color: Color(0xFF2193b0),
+    switch (_currentStep) {
+      case 0:
+        return Column(
+          children: [
+            TextFormField(
+              controller: provider.nameController,
+              decoration: InputDecoration(
+                labelText: 'Name',
+                prefixIcon: Icon(Icons.person, color: Color(0xFF2193b0)),
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF2193b0), width: 2),
+                ),
               ),
-              onPressed: () {
-                setState(() {
-                  _isPasswordVisible = !_isPasswordVisible;
-                });
+              validator: (value) => value == null || value.isEmpty ? 'Enter your name' : null,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: provider.emailController,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF2193b0)),
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF2193b0), width: 2),
+                ),
+              ),
+              keyboardType: TextInputType.emailAddress,
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Enter your email';
+                return null;
               },
             ),
-            filled: true,
-            fillColor: Colors.grey[100],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+            const SizedBox(height: 16),
+            IntlPhoneField(
+              controller: provider.phoneController,
+              decoration: InputDecoration(
+                labelText: 'Phone',
+                prefixIcon: Icon(Icons.phone, color: Color(0xFF2193b0)),
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF2193b0), width: 2),
+                ),
+              ),
+              initialCountryCode: 'IN',
+              onChanged: (phone) {},
+              onSaved: (phone) {
+                if (phone != null && phone.number.isNotEmpty) {
+                  provider.phoneController.text = phone.completeNumber;
+                } else {
+                  provider.phoneController.clear();
+                }
+              },
+              validator: (value) {
+                if (value == null || value.number.isEmpty) return 'Enter your phone number';
+                return null;
+              },
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.grey, width: 1),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2193b0), width: 2),
-            ),
-          ),
-          obscureText: !_isPasswordVisible,
-          validator: (value) {
-            if (value == null || value.isEmpty) return 'Enter a password';
-            if (value.length < 6) return 'Password must be at least 6 characters';
-            return null;
-          },
-        ),
-        const SizedBox(height: 20),
-        // Interests Section
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text('Your Interests', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
-        ),
-        const SizedBox(height: 8),
-        // Suggested Interests as colorful chips
-        SizedBox(
-          height: 40,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: _RegisterScreenBody.interestOptions
-                .where((option) => !provider.selectedInterests.contains(option))
-                .map((option) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: InputChip(
-                        label: Text(option, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
-                        onPressed: () {
-                          provider.addInterest(option);
-                        },
-                        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
-                        elevation: 2,
-                      ),
-                    ))
-                .toList(),
-          ),
-        ),
-        const SizedBox(height: 10),
-        // Custom interest input with floating add button
-        Row(
-          children: [
-            Expanded(
-              child: Material(
-                elevation: 2,
-                borderRadius: BorderRadius.circular(24),
-                child: TextField(
-                  controller: provider.interestsController,
-                  decoration: InputDecoration(
-                    hintText: 'Type your interest',
-                    filled: true,
-                    fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingM, vertical: AppConstants.paddingS),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      borderSide: BorderSide.none,
-                    ),
-                    hintStyle: Theme.of(context).textTheme.bodyMedium,
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: provider.passwordController,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                prefixIcon: Icon(Icons.lock_outline, color: Color(0xFF2193b0)),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    color: Color(0xFF2193b0),
                   ),
-                  onSubmitted: (value) {
-                    final trimmed = value.trim();
-                    if (trimmed.isNotEmpty && !provider.selectedInterests.contains(trimmed)) {
-                      provider.addInterest(trimmed);
-                    }
-                    provider.interestsController.clear();
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
                   },
+                ),
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF2193b0), width: 2),
+                ),
+              ),
+              obscureText: !_isPasswordVisible,
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Enter a password';
+                if (value.length < 6) return 'Password must be at least 6 characters';
+                return null;
+              },
+            ),
+          ],
+        );
+      case 1:
+        return Column(
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Your Address', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: provider.addressLine1Controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Address Line 1',
+                        prefixIcon: Icon(Icons.home_outlined),
+                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: AppConstants.textColor),
+                      ),
+                      validator: (value) => value == null || value.isEmpty ? 'Enter address line 1' : null,
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: provider.addressLine2Controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Address Line 2 (optional)',
+                        prefixIcon: Icon(Icons.home),
+                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: AppConstants.textColor),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                   // Country, State, City Picker
+                   CountryStateCityPicker(
+                     country: provider.countryController,
+                     state: provider.stateController,
+                     city: provider.cityController,
+                     dialogColor: Theme.of(context).colorScheme.background,
+                     textFieldDecoration: InputDecoration(
+                       fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                       filled: true,
+                       suffixIcon: const Icon(Icons.arrow_downward_rounded),
+                       border: const OutlineInputBorder(borderSide: BorderSide.none),
+                       labelStyle: Theme.of(context).textTheme.bodyMedium,
+                     ),
+                   ),
+                   const SizedBox(height: 8),
+                    TextFormField(
+                      controller: provider.pincodeController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 6,
+                      decoration: const InputDecoration(
+                        labelText: 'Pincode',
+                        prefixIcon: Icon(Icons.pin_drop),
+                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: AppConstants.textColor),
+                        counterText: '',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Enter pincode';
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+          ],
+        );
+      case 2:
+        return Column(
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Your Interests', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4.0, bottom: 4.0),
+                child: Text('Type your interest', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+              ),
+            ),
             Material(
-              color: Theme.of(context).colorScheme.primary,
-              shape: const CircleBorder(),
               elevation: 4,
-              child: IconButton(
-                icon: const Icon(Icons.add, color: Colors.white),
-                onPressed: () {
-                  final trimmed = provider.interestsController.text.trim();
+              borderRadius: BorderRadius.circular(24),
+              child: TextField(
+                controller: provider.interestsController,
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.primary),
+                  hintText: 'Search or add interest',
+                  filled: true,
+                  fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingM, vertical: AppConstants.paddingS),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  hintStyle: Theme.of(context).textTheme.bodyMedium,
+                ),
+                onChanged: (_) {
+                  setState(() {}); // To update filtered chips
+                },
+                onSubmitted: (value) {
+                  final trimmed = value.trim();
                   if (trimmed.isNotEmpty && !provider.selectedInterests.contains(trimmed)) {
                     provider.addInterest(trimmed);
                   }
                   provider.interestsController.clear();
+                  setState(() {});
                 },
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        // Selected interests as animated colorful chips
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          child: Wrap(
-            spacing: 8.0,
-            runSpacing: 4.0,
-            children: provider.selectedInterests
-                .map((interest) => InputChip(
-                      label: Text(interest, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
-                      deleteIcon: const Icon(Icons.close, size: 18),
-                      onDeleted: () {
-                        provider.removeInterest(interest);
-                      },
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      elevation: 2,
-                    ))
-                .toList(),
-          ),
-        ),
-        if (provider.selectedInterests.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 8.0, left: 8.0),
-            child: Text('Enter your interests', style: TextStyle(color: AppConstants.errorColor)),
-          ),
-        const SizedBox(height: 20),
-        // Address Section
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text('Your Address', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: _RegisterScreenBody.interestOptions
+                    .where((option) => !provider.selectedInterests.contains(option))
+                    .where((option) => provider.interestsController.text.isEmpty || option.toLowerCase().contains(provider.interestsController.text.toLowerCase()))
+                    .map((option) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                          child: InputChip(
+                            label: Text(option, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary)),
+                            onPressed: () {
+                              provider.addInterest(option);
+                              setState(() {});
+                            },
+                            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                            elevation: 2,
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
               children: [
-                TextFormField(
-                  controller: provider.addressLine1Controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Address Line 1',
-                    prefixIcon: Icon(Icons.home_outlined),
-                    border: OutlineInputBorder(),
-                    labelStyle: TextStyle(color: AppConstants.textColor),
+                const Spacer(),
+                Material(
+                  color: Theme.of(context).colorScheme.primary,
+                  shape: const CircleBorder(),
+                  elevation: 4,
+                  child: IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    onPressed: () {
+                      final trimmed = provider.interestsController.text.trim();
+                      if (trimmed.isNotEmpty && !provider.selectedInterests.contains(trimmed)) {
+                        provider.addInterest(trimmed);
+                      }
+                      provider.interestsController.clear();
+                      setState(() {});
+                    },
                   ),
-                  validator: (value) => value == null || value.isEmpty ? 'Enter address line 1' : null,
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: provider.addressLine2Controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Address Line 2 (optional)',
-                    prefixIcon: Icon(Icons.home),
-                    border: OutlineInputBorder(),
-                    labelStyle: TextStyle(color: AppConstants.textColor),
-                  ),
-                ),
-                const SizedBox(height: 8),
-               // Country, State, City Picker
-               CountryStateCityPicker(
-                 country: provider.countryController,
-                 state: provider.stateController,
-                 city: provider.cityController,
-                 dialogColor: Theme.of(context).colorScheme.background,
-                 textFieldDecoration: InputDecoration(
-                   fillColor: Theme.of(context).colorScheme.primary.withOpacity(0.08),
-                   filled: true,
-                   suffixIcon: const Icon(Icons.arrow_downward_rounded),
-                   border: const OutlineInputBorder(borderSide: BorderSide.none),
-                   labelStyle: Theme.of(context).textTheme.bodyMedium,
-                 ),
-               ),
-               const SizedBox(height: 8),
-                TextFormField(
-                  controller: provider.pincodeController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  decoration: const InputDecoration(
-                    labelText: 'Pincode',
-                    prefixIcon: Icon(Icons.pin_drop),
-                    border: OutlineInputBorder(),
-                    labelStyle: TextStyle(color: AppConstants.textColor),
-                    counterText: '',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Enter pincode';
-                    // if (!RegExp(r'^\d{6} 24').hasMatch(value)) return 'Enter a valid 6-digit pincode';
-                    // return null;
-                  },
                 ),
               ],
             ),
-          ),
-        ),
-      ],
-    );
+            const SizedBox(height: 10),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              child: Wrap(
+                spacing: 8.0,
+                runSpacing: 4.0,
+                children: provider.selectedInterests
+                    .map((interest) => InputChip(
+                          label: Text(interest, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
+                          deleteIcon: const Icon(Icons.close, size: 18),
+                          onDeleted: () {
+                            provider.removeInterest(interest);
+                            setState(() {});
+                          },
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          elevation: 2,
+                        ))
+                    .toList(),
+              ),
+            ),
+            if (provider.selectedInterests.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 8.0, left: 8.0),
+                child: Text('Enter your interests', style: TextStyle(color: AppConstants.errorColor)),
+              ),
+          ],
+        );
+      default:
+        return const SizedBox();
+    }
   }
 }

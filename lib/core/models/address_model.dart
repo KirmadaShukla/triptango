@@ -16,8 +16,8 @@ class Address {
   });
 
   Map<String, String?> toJson() => {
-    'addressLine1': addressLine1,
-    'addressLine2': addressLine2,
+    'address_line1': addressLine1,
+    'address_line2': addressLine2,
     'country': country,
     'state': state,
     'city': city,

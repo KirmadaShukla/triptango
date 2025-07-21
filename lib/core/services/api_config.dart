@@ -10,9 +10,12 @@ class ApiConfig {
   ApiConfig._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'http://127.0.0.1:8000/api', // Use dotenv if needed
+        baseUrl: 'http://192.168.31.91:8000/api', // Updated to use local IP for emulator/device access
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       ),
     );
     // You can add interceptors here if needed
