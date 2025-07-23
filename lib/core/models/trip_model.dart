@@ -19,6 +19,7 @@ class TripModel {
   final bool isPublic;
   final String? interests;
 
+  
   TripModel({
     required this.id,
     required this.title,
@@ -41,11 +42,11 @@ class TripModel {
 
   factory TripModel.fromJson(Map<String, dynamic> json) {
     return TripModel(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      destination: json['destination'] as String,
-      startDate: json['start_date'] as String,
-      endDate: json['end_date'] as String,
+      id: json['id'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      destination: json['destination'] as String? ?? '',
+      startDate: json['start_date'] as String? ?? '',
+      endDate: json['end_date'] as String? ?? '',
       description: json['description'] as String?,
       creator: json['creator'] != null ? UserModel.fromJson(json['creator']) : null,
       participants: json['participants'] != null
@@ -70,4 +71,4 @@ class TripModel {
       interests: json['interests'] as String?,
     );
   }
-} 
+}

@@ -11,10 +11,7 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
-      child: const _LoginScreenBody(),
-    );
+    return const _LoginScreenBody();
   }
 }
 

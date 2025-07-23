@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:triptango/features/auth/presentation/providers/auth_provider.dart';
+import 'package:triptango/features/home/provider/home_provider.dart';
 import 'app_router.dart';
 import 'shared/providers/theme_provider.dart';
 import 'shared/themes/app_theme.dart';
@@ -9,6 +11,8 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => HomeProvider()),
       ],
       child: const MyApp(),
     ),

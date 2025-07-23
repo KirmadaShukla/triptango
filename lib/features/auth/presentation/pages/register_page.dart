@@ -19,10 +19,7 @@ class RegisterPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AuthProvider(),
-      child: const _RegisterScreenBody(),
-    );
+    return const _RegisterScreenBody();
   }
 }
 

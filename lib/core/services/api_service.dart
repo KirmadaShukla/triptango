@@ -1,14 +1,18 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'api_config.dart';
 import '../models/trip_model.dart';
 
 class ApiService {
   static Future<Response> login(String email, String password) async {
     try {
-      return await ApiConfig().postRequest('/user/jwt/login/', data: {
-        'email': email, // Use 'email' as required by backend JWT
-        'password': password,
-      });
+      return await ApiConfig().postRequest(
+        '/user/jwt/login/',
+        data: {
+          'email': email, // Use 'email' as required by backend JWT
+          'password': password,
+        },
+      );
     } catch (e) {
       if (e is DioError) {
         print('Error data: ${e.response?.data}');
@@ -26,9 +30,10 @@ class ApiService {
 
   static Future<Response> googleLogin(String idToken) async {
     try {
-      return await ApiConfig().postRequest('/user/google-login/', data: {
-        'id_token': idToken,
-      });
+      return await ApiConfig().postRequest(
+        '/user/google-login/',
+        data: {'id_token': idToken},
+      );
     } catch (e) {
       if (e is DioError) {
         print('Error data:  [${e.response?.data}');
@@ -40,15 +45,21 @@ class ApiService {
     }
   }
 
-  static Future<List<TripModel>> getFeaturedTrips() async {
-    final response = await ApiConfig().getRequest('/trip/featured/');
-    final data = response.data;
-    if (data is List) {
-      return data.map((e) => TripModel.fromJson(e)).toList();
-    } else if (data is Map && data['results'] is List) {
-      return (data['results'] as List).map((e) => TripModel.fromJson(e)).toList();
-    } else {
-      return [];
+  static Future<Response> getFeaturedTrips() async {
+    try {
+      return await ApiConfig().getRequest('/trip/featured/');
+    } catch (e) {
+      debugPrint('Error occured $e');
+      rethrow;
+    }
+  }
+
+  static Future<Response> getUpcomingTrips() async {
+    try {
+      return await ApiConfig().getRequest('/trip/upcoming/');
+    } catch (e) {
+      debugPrint('Error occured $e');
+      rethrow;
     }
   }
 
@@ -62,14 +73,17 @@ class ApiService {
     String? interest,
     required Map<String, String> address,
   }) async {
-    return await ApiConfig().postRequest('/user/', data: {
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'password': password,
-      if (bio != null) 'bio': bio,
-      if (interest != null) 'interest': interest,
-      'address': address,
-    });
+    return await ApiConfig().postRequest(
+      '/user/',
+      data: {
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'password': password,
+        if (bio != null) 'bio': bio,
+        if (interest != null) 'interest': interest,
+        'address': address,
+      },
+    );
   }
-} 
+}
