@@ -55,7 +55,7 @@ class _UpcomingTripsCarouselState extends State<UpcomingTripsCarousel> {
     final provider = Provider.of<HomeProvider>(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
