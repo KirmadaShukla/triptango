@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:triptango/core/constants/app_constants.dart';
 import 'package:triptango/features/home/provider/home_provider.dart';
 import 'package:triptango/features/home/widgets/featured_trips_section.dart';
+import 'package:triptango/features/home/widgets/recommended_trips_section.dart';
 import 'package:triptango/features/home/widgets/upcoming_trips_carousel.dart';
 
 class HomePage extends StatelessWidget {
@@ -11,7 +12,10 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => HomeProvider()..fetchFeaturedTrips()..fetchUpcomingTrips(),
+      create: (_) => HomeProvider()
+        ..fetchFeaturedTrips()
+        ..fetchUpcomingTrips()
+        ..fetchRecommendedTrips(),
       child: Consumer<HomeProvider>(
         builder: (context, provider, child) {
           return SingleChildScrollView(
@@ -24,6 +28,8 @@ class HomePage extends StatelessWidget {
                     const UpcomingTripsCarousel(),
                   const SizedBox(height: AppConstants.paddingL),
                   const FeaturedTripsSection(),
+                  const SizedBox(height: AppConstants.paddingL),
+                  const RecommendedTripsSection(),
                   const SizedBox(height: AppConstants.paddingXL),
                 ],
               ),

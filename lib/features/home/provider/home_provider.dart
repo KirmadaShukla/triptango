@@ -7,11 +7,13 @@ class HomeProvider extends ChangeNotifier {
   String? _errorMessage;
   List<TripModel> _trips = [];
   List<TripModel> _upcomingTrips = [];
+  List<TripModel> _recommendedTrips = [];
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   List<TripModel> get featuredTrips => _trips;
   List<TripModel> get upcomingTrips => _upcomingTrips;
+  List<TripModel> get recommendedTrips => _recommendedTrips;
 
   Future<void> fetchUpcomingTrips() async {
     _isLoading = true;
@@ -55,6 +57,24 @@ class HomeProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> fetchRecommendedTrips() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
 
-
+    try {
+      final response = await ApiService.getRecommendedTrips();
+      if (response.statusCode == 200) {
+        final List<dynamic> tripData = response.data;
+        _recommendedTrips = tripData.map((data) => TripModel.fromJson(data)).toList();
+      } else {
+        _errorMessage = 'Failed to load recommended trips';
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

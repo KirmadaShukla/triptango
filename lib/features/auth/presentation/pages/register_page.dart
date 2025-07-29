@@ -6,7 +6,6 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:triptango/shared/widgets/app_snackbar.dart';
 import 'package:triptango/features/auth/presentation/providers/auth_provider.dart';
 import 'package:triptango/core/constants/app_constants.dart';
-import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:country_state_city_pro/country_state_city_pro.dart';
 import 'package:triptango/core/models/address_model.dart';

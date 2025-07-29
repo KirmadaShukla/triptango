@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,7 +11,7 @@ class ApiConfig {
   ApiConfig._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'http://192.168.31.91:8000/api', // Updated to use local IP for emulator/device access
+        baseUrl: 'http://10.140.123.43:8000/api', // Use machine IP for real device
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {
@@ -37,7 +38,16 @@ class ApiConfig {
 
   Future<Response> postRequest(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
     await setAuthHeader();
-    return await dio.post(path, data: data, queryParameters: queryParameters);
+    print('[DEBUG] Making POST request to: ${dio.options.baseUrl}$path');
+    print('[DEBUG] Request data: $data');
+    print('[DEBUG] Request headers: ${dio.options.headers}');
+    
+    final response = await dio.post(path, data: data, queryParameters: queryParameters);
+    
+    print('[DEBUG] Response status: ${response.statusCode}');
+    print('[DEBUG] Response data: ${response.data}');
+    
+    return response;
   }
 
   Future<Response> putRequest(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
@@ -49,4 +59,4 @@ class ApiConfig {
     await setAuthHeader();
     return await dio.delete(path, data: data, queryParameters: queryParameters);
   }
-} 
+}

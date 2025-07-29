@@ -69,16 +69,28 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final response = await ApiService.login(email, password);
-      if (response.statusCode == 200 && response.data['token'] != null) {
+      print('Login response status: ${response.statusCode}');
+      print('Login response data: ${response.data}');
+      
+      if (response.statusCode == 200 && response.data['access'] != null) {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', response.data['token']);
+        await prefs.setString('token', response.data['access']);
         await fetchUserProfile();
       } else {
-        _errorMessage = response.data['error'] ?? 'Login failed';
+        _errorMessage = (response.data is Map ? response.data['detail'] : null) ?? 'Login failed';
       }
     } on DioException catch (e) {
-      _errorMessage = e.response?.data['error'] ?? 'Network error';
+      print('DioException in login: ${e.message}');
+      print('Response data: ${e.response?.data}');
+      print('Response status: ${e.response?.statusCode}');
+      
+      if (e.response?.data is Map) {
+        _errorMessage = e.response?.data['detail'] ?? e.response?.data['error'] ?? 'A network error occurred.';
+      } else {
+        _errorMessage = 'Login failed due to a server error.';
+      }
     } catch (e) {
+      print('Unexpected error in login: $e');
       _errorMessage = 'An unexpected error occurred';
     } finally {
       _isLoginLoading = false;
@@ -95,10 +107,14 @@ class AuthProvider extends ChangeNotifier {
       if (response.statusCode == 200 && response.data != null) {
         _user = UserModel.fromJson(response.data);
       } else {
-        _errorMessage = response.data['message'] ?? 'Failed to load profile';
+        _errorMessage = (response.data is Map ? response.data['message'] : null) ?? 'Failed to load profile';
       }
     } on DioException catch (e) {
-      _errorMessage = e.response?.data['message'] ?? 'Network error';
+      if (e.response?.data is Map) {
+        _errorMessage = e.response?.data['message'] ?? 'A network error occurred.';
+      } else {
+        _errorMessage = 'Failed to load profile due to a server error.';
+      }
     } catch (e) {
       _errorMessage = 'Failed to load profile';
     } finally {
@@ -125,41 +141,37 @@ class AuthProvider extends ChangeNotifier {
       );
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
-        print('Google sign-in aborted by user');
+        debugPrint('Google sign-in aborted by user');
         _errorMessage = 'Google sign-in aborted';
         _isGoogleLoading = false;
         notifyListeners();
         return;
       }
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      print('Google User ID:  [${googleUser.id}');
-      print('Google User Name:  [${googleUser.displayName}');
-      print('Google User Email:  [${googleUser.email}');
-      print('Google ID Token:  [${googleAuth.idToken}');
-      print('Google Access Token:  [${googleAuth.accessToken}');
+      debugPrint('Google User ID:  [${googleUser.id}');
+      debugPrint('Google User Name:  [${googleUser.displayName}');
+      debugPrint('Google User Email:  [${googleUser.email}');
+      debugPrint('Google ID Token:  [${googleAuth.idToken}');
+      debugPrint('Google Access Token:  [${googleAuth.accessToken}');
       if (googleAuth.idToken == null) {
-        print('Google idToken is null!');
+        debugPrint('Google idToken is null!');
         _errorMessage = 'Google sign-in failed: No idToken';
         _isGoogleLoading = false;
         notifyListeners();
         return;
       }
       final response = await ApiService.googleLogin(googleAuth.idToken!);
-      print('Google login backend response:  [${response.data}');
-      if (response.statusCode == 200 && response.data != null) {
-        _user = UserModel(
-          id: googleUser.id,
-          name: response.data['name'] ?? googleUser.displayName ?? 'Google User',
-          email: response.data['email'] ?? googleUser.email,
-          phone: '',
-        );
-        _errorMessage = null;
+      debugPrint('Google login backend response:  [${response.data}');
+      if (response.statusCode == 200 && response.data['access'] != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', response.data['access']);
+        await fetchUserProfile();
       } else {
         _errorMessage = response.data['error'] ?? 'Google login failed';
       }
     } catch (e, stack) {
-      print('Google sign-in error: $e');
-      print('Stack trace: $stack');
+      debugPrint('Google sign-in error: $e');
+      debugPrint('Stack trace: $stack');
       _errorMessage = 'Google sign-in failed';
     } finally {
       _isGoogleLoading = false;
@@ -198,11 +210,15 @@ class AuthProvider extends ChangeNotifier {
         // Optionally fetch user profile or set _user here
         return true;
       } else {
-        _errorMessage = response.data['error'] ?? 'Registration failed';
+        _errorMessage = (response.data is Map ? response.data['error'] : null) ?? 'Registration failed';
         return false;
       }
     } on DioException catch (e) {
-      _errorMessage = e.response?.data['error'] ?? 'Network error';
+      if (e.response?.data is Map) {
+        _errorMessage = e.response?.data['error'] ?? 'A network error occurred.';
+      } else {
+        _errorMessage = 'Registration failed due to a server error.';
+      }
       return false;
     } catch (e) {
       _errorMessage = 'An unexpected error occurred';
@@ -212,4 +228,4 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-} 
+}

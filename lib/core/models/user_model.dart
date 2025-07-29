@@ -42,7 +42,7 @@ class UserModel {
       id: json['id'] as String,
       name: json['name'] as String,
       email: json['email'] as String,
-      phone: json['phone'] as String, // required
+      phone: json['phone'] as String? ?? '', // Make phone optional with default empty string
       bio: json['bio'] as String?,
       isActive: json['is_active'] as bool?,
       dateJoined: json['date_joined'] as String?,
@@ -55,8 +55,8 @@ class UserModel {
       points: json['points'] as int?,
       interest: json['interest'] as String?,
       address: json['address'] != null ? Address(
-        addressLine1: json['address']['addressLine1'] ?? '',
-        addressLine2: json['address']['addressLine2'],
+        addressLine1: json['address']['address_line1'] ?? '',
+        addressLine2: json['address']['address_line2'],
         country: json['address']['country'] ?? '',
         state: json['address']['state'] ?? '',
         city: json['address']['city'] ?? '',

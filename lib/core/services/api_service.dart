@@ -6,26 +6,35 @@ import '../models/trip_model.dart';
 class ApiService {
   static Future<Response> login(String email, String password) async {
     try {
-      return await ApiConfig().postRequest(
+      final data = {
+        'email': email,
+        'password': password,
+      };
+      print('[DEBUG] Sending login request with data: $data');
+      
+      final response = await ApiConfig().postRequest(
         '/user/jwt/login/',
-        data: {
-          'email': email, // Use 'email' as required by backend JWT
-          'password': password,
-        },
+        data: data,
       );
+      
+      print('[DEBUG] Login response status: ${response.statusCode}');
+      print('[DEBUG] Login response data: ${response.data}');
+      
+      return response;
     } catch (e) {
       if (e is DioError) {
-        print('Error data: ${e.response?.data}');
-        print('Status code: ${e.response?.statusCode}');
+        print('[ERROR] Login failed - Status: ${e.response?.statusCode}');
+        print('[ERROR] Login failed - Data: ${e.response?.data}');
+        print('[ERROR] Login failed - Headers: ${e.response?.headers}');
       } else {
-        print(e);
+        print('[ERROR] Login failed with exception: $e');
       }
       rethrow;
     }
   }
 
   static Future<Response> getProfile() async {
-    return await ApiConfig().getRequest('/profile');
+    return await ApiConfig().getRequest('/user/profile');
   }
 
   static Future<Response> googleLogin(String idToken) async {
@@ -44,7 +53,6 @@ class ApiService {
       rethrow;
     }
   }
-
   static Future<Response> getFeaturedTrips() async {
     try {
       return await ApiConfig().getRequest('/trip/featured/');
@@ -57,6 +65,15 @@ class ApiService {
   static Future<Response> getUpcomingTrips() async {
     try {
       return await ApiConfig().getRequest('/trip/upcoming/');
+    } catch (e) {
+      debugPrint('Error occured $e');
+      rethrow;
+    }
+  }
+
+  static Future<Response> getRecommendedTrips() async {
+    try {
+      return await ApiConfig().getRequest('/trip/recommend/');
     } catch (e) {
       debugPrint('Error occured $e');
       rethrow;
