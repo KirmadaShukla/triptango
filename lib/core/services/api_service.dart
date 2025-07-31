@@ -89,6 +89,15 @@ class ApiService {
     }
   }
 
+  static Future<Response> getPopularDestinations() async {
+    try {
+      return await ApiConfig().getRequest('/trip/popular-cities/');
+    } catch (e) {
+      debugPrint('Error occured $e');
+      rethrow;
+    }
+  }
+
   // Add more API methods here as needed
   static Future<Response> register({
     required String name,

@@ -24,13 +24,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    return MaterialApp.router(
-      title: 'TravelTribe',
-      theme: AppTheme.lightTheme,
-      darkTheme: ThemeData.dark(),
-      themeMode: themeProvider.themeMode,
-      routerConfig: appRouter,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp.router(
+          title: 'TravelTribe',
+          theme: AppTheme.lightTheme,
+          darkTheme: ThemeData.dark(),
+          themeMode: themeProvider.themeMode,
+          routerConfig: appRouter,
+        );
+      },
     );
   }
 }

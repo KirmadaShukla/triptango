@@ -4,6 +4,7 @@ import 'package:triptango/core/constants/app_constants.dart';
 import 'package:triptango/features/home/provider/home_provider.dart';
 import 'package:triptango/features/home/widgets/featured_trips_section.dart';
 import 'package:triptango/features/home/widgets/hero_section.dart';
+import 'package:triptango/features/home/widgets/popular_destinations_section.dart';
 import 'package:triptango/features/home/widgets/recommended_trips_section.dart';
 import 'package:triptango/features/home/widgets/upcoming_trips_carousel.dart';
 
@@ -27,7 +28,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 2000),
     );
 
-    final widgetsCount = 4;
+    final widgetsCount = 5;
     _slideAnimations = List.generate(
       widgetsCount,
       (index) => Tween<Offset>(
@@ -63,6 +64,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
 
     _animationController.forward();
+    
+    // Fetch data after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<HomeProvider>(context, listen: false)
+        ..fetchFeaturedTrips()
+        ..fetchUpcomingTrips()
+        ..fetchRecommendedTrips()
+        ..fetchPopularDestinations();
+    });
   }
 
   @override
@@ -83,36 +93,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => HomeProvider()
-        ..fetchFeaturedTrips()
-        ..fetchUpcomingTrips()
-        ..fetchRecommendedTrips(),
-      child: Consumer<HomeProvider>(
-        builder: (context, provider, child) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(AppConstants.paddingM),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildAnimatedWidget(const HeroSection(), 0),
-                  if (provider.upcomingTrips.isNotEmpty)
-                    _buildAnimatedWidget(const UpcomingTripsCarousel(), 1),
-                  _buildAnimatedWidget(const FeaturedTripsSpotlight(), 2),
-                  const SizedBox(height: AppConstants.paddingL),
-                  if (provider.recommendedTrips.isNotEmpty)
-                    _buildAnimatedWidget(const RecommendedTripsSection(), 3),
-                  const SizedBox(height: AppConstants.paddingL),
-                  if (provider.trendingDestinations.isNotEmpty)
-                    // _buildAnimatedWidget(const TrendingDestinationsSection(), 4),
-                  const SizedBox(height: AppConstants.paddingXL),
-                ],
-              ),
+    return Consumer<HomeProvider>(
+      builder: (context, provider, child) {
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.paddingM),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildAnimatedWidget(const HeroSection(), 0),
+                if (provider.upcomingTrips.isNotEmpty)
+                  _buildAnimatedWidget(const UpcomingTripsCarousel(), 1),
+                _buildAnimatedWidget(const FeaturedTripsSpotlight(), 2),
+                const SizedBox(height: AppConstants.paddingL),
+                if (provider.recommendedTrips.isNotEmpty)
+                  _buildAnimatedWidget(const RecommendedTripsSection(), 3),
+                const SizedBox(height: AppConstants.paddingL),
+                if (provider.popularDestinations.isNotEmpty)
+                  _buildAnimatedWidget(const PopularDestinationsSection(), 4),
+                const SizedBox(height: AppConstants.paddingXL),
+              ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
