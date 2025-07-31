@@ -11,15 +11,15 @@ class AppConstants {
   static const Color errorColor = Colors.redAccent;
 
   // Padding & Margin
-  static const double paddingXS = 4.0;
-  static const double paddingS = 8.0;
-  static const double paddingM = 16.0;
-  static const double paddingL = 24.0;
-  static const double paddingXL = 32.0;
+  static const double paddingXS = 2.0;
+  static const double paddingS = 4.0;
+  static const double paddingM = 8.0;
+  static const double paddingL = 12.0;
+  static const double paddingXL = 16.0;
 
-  static const double marginXS = 4.0;
-  static const double marginS = 8.0;
-  static const double marginM = 16.0;
+  static const double marginXS = 2.0;
+  static const double marginS = 4.0;
+  static const double marginM = 8.0;
   static const double marginL = 24.0;
   static const double marginXL = 32.0;
 

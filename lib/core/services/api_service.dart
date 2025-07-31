@@ -80,6 +80,15 @@ class ApiService {
     }
   }
 
+  static Future<Response> getTrendingDestinations() async {
+    try {
+      return await ApiConfig().getRequest('/trip/trending-destinations/');
+    } catch (e) {
+      debugPrint('Error occured $e');
+      rethrow;
+    }
+  }
+
   // Add more API methods here as needed
   static Future<Response> register({
     required String name,

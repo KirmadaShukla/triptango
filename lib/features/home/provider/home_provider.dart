@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:triptango/core/models/trending_destination_model.dart';
 import 'package:triptango/core/models/trip_model.dart';
 import '../../../core/services/api_service.dart';
 class HomeProvider extends ChangeNotifier {
@@ -8,12 +9,14 @@ class HomeProvider extends ChangeNotifier {
   List<TripModel> _trips = [];
   List<TripModel> _upcomingTrips = [];
   List<TripModel> _recommendedTrips = [];
+  List<TrendingDestinationModel> _trendingDestinations = [];
 
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   List<TripModel> get featuredTrips => _trips;
   List<TripModel> get upcomingTrips => _upcomingTrips;
   List<TripModel> get recommendedTrips => _recommendedTrips;
+  List<TrendingDestinationModel> get trendingDestinations => _trendingDestinations;
 
   Future<void> fetchUpcomingTrips() async {
     _isLoading = true;
@@ -46,7 +49,7 @@ class HomeProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final List<dynamic> tripData = response.data;
         _trips = tripData.map((data) => TripModel.fromJson(data)).toList();
-      } else {
+              } else {
         _errorMessage = 'Failed to load featured trips';
       }
     } catch (e) {
@@ -69,6 +72,27 @@ class HomeProvider extends ChangeNotifier {
         _recommendedTrips = tripData.map((data) => TripModel.fromJson(data)).toList();
       } else {
         _errorMessage = 'Failed to load recommended trips';
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchTrendingDestinations() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.getTrendingDestinations();
+      if (response.statusCode == 200) {
+        final List<dynamic> tripData = response.data;
+        _trendingDestinations = tripData.map((data) => TrendingDestinationModel.fromJson(data)).toList();
+      } else {
+        _errorMessage = 'Failed to load trending destinations';
       }
     } catch (e) {
       _errorMessage = e.toString();
