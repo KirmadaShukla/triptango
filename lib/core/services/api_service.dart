@@ -98,6 +98,15 @@ class ApiService {
     }
   }
 
+  static Future<Response> getExploreTrips(int page) async {
+    try {
+      return await ApiConfig().getRequest('/trip/explore/?page=$page');
+    } catch (e) {
+      debugPrint('Error occured $e');
+      rethrow;
+    }
+  }
+
   // Add more API methods here as needed
   static Future<Response> register({
     required String name,

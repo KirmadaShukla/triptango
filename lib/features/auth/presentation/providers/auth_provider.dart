@@ -6,6 +6,10 @@ import 'package:dio/dio.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthProvider extends ChangeNotifier {
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email'],
+    serverClientId: '1025954988698-l7pj6dqd6h5su5k0k1h7o94k4kic6rsh.apps.googleusercontent.com',
+  );
   bool _isLoading = false;
   String? _errorMessage;
   UserModel? _user;
@@ -69,9 +73,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final response = await ApiService.login(email, password);
-      print('Login response status: ${response.statusCode}');
-      print('Login response data: ${response.data}');
-      
       if (response.statusCode == 200 && response.data['access'] != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', response.data['access']);
@@ -125,7 +126,8 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
+    await prefs.remove('token');
+    await _googleSignIn.signOut();
     _user = null;
     notifyListeners();
   }
@@ -135,11 +137,7 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        scopes: ['email'],
-        serverClientId: '1025954988698-l7pj6dqd6h5su5k0k1h7o94k4kic6rsh.apps.googleusercontent.com', // <-- Replace with your actual Web client ID
-      );
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         debugPrint('Google sign-in aborted by user');
         _errorMessage = 'Google sign-in aborted';
@@ -152,7 +150,6 @@ class AuthProvider extends ChangeNotifier {
       debugPrint('Google User Name:  [${googleUser.displayName}');
       debugPrint('Google User Email:  [${googleUser.email}');
       debugPrint('Google ID Token:  [${googleAuth.idToken}');
-      debugPrint('Google Access Token:  [${googleAuth.accessToken}');
       if (googleAuth.idToken == null) {
         debugPrint('Google idToken is null!');
         _errorMessage = 'Google sign-in failed: No idToken';

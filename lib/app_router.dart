@@ -3,14 +3,17 @@ import 'package:flutter/material.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'features/home/home_page.dart';
-import 'features/explore/explore_page.dart';
+import 'features/explore/presentation/pages/explore_page.dart';
 import 'features/create_trip/create_trip_page.dart';
 import 'features/matches/matches_page.dart';
 import 'features/wishlist/wishlist_page.dart';
 import 'shared/widgets/main_scaffold.dart';
 
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
+  observers: [routeObserver],
   routes: [
     GoRoute(
       path: '/splash',
@@ -56,4 +59,4 @@ final GoRouter appRouter = GoRouter(
       ],
     ),
   ],
-); 
+);
