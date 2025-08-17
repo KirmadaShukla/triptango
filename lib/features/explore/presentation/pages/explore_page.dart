@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:triptango/features/explore/presentation/providers/explore_provider.dart';
+import 'package:triptango/features/explore/presentation/widgets/instagram_post.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
@@ -16,18 +17,26 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     final exploreProvider = Provider.of<ExploreProvider>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (exploreProvider.trips.isEmpty) {
+    if (exploreProvider.trips.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         exploreProvider.fetchTrips();
-      }
-    });
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels ==
-          _scrollController.position.maxScrollExtent) {
-        exploreProvider.fetchTrips();
-      }
-    });
+      });
+    }
+  }
+
+  void _onScroll() {
+    final exploreProvider = Provider.of<ExploreProvider>(context, listen: false);
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      exploreProvider.fetchTrips();
+    }
   }
 
   @override
@@ -39,8 +48,29 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Explore'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Explore',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite_border, color: Colors.black),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.send_outlined, color: Colors.black),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: Consumer<ExploreProvider>(
         builder: (context, provider, child) {
@@ -48,51 +78,25 @@ class _ExplorePageState extends State<ExplorePage> {
             return _buildShimmerEffect();
           }
 
-          return RefreshIndicator(
-            onRefresh: () => provider.fetchTrips(forceRefresh: true),
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: provider.trips.length + (provider.hasMore ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == provider.trips.length) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final trip = provider.trips[index];
-                return Card(
-                  margin: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      Image.network(trip.coverImageUrl),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(trip.title,
-                            style: const TextStyle(fontSize: 18.0)),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.favorite),
-                              const SizedBox(width: 4.0),
-                              Text('${trip.likesCount}'),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              const Icon(Icons.comment),
-                              const SizedBox(width: 4.0),
-                              Text('${trip.commentsCount}'),
-                            ],
-                          ),
-                          const Icon(Icons.share),
-                        ],
-                      ),
-                    ],
+          return Column(
+            children: [
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () => provider.fetchTrips(forceRefresh: true),
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: EdgeInsets.zero,
+                    itemCount: provider.trips.length,
+                    itemBuilder: (context, index) {
+                      final trip = provider.trips[index];
+                      return InstagramPost(trip: trip);
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              if (provider.isLoading && provider.trips.isNotEmpty)
+                _buildBottomShimmerEffect(),
+            ],
           );
         },
       ),
@@ -104,35 +108,95 @@ class _ExplorePageState extends State<ExplorePage> {
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
       child: ListView.builder(
-        itemCount: 5,
+        itemCount: 3,
         itemBuilder: (context, index) {
-          return Card(
-            margin: const EdgeInsets.all(8.0),
-            child: Column(
+          return _buildShimmerItem();
+        },
+      ),
+    );
+  }
+
+  Widget _buildBottomShimmerEffect() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: _buildShimmerItem(),
+    );
+  }
+
+  Widget _buildShimmerItem() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Shimmer
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Row(
               children: [
                 Container(
-                  height: 200.0,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 8.0),
-                Container(
-                  height: 20.0,
-                  width: double.infinity,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 8.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: List.generate(3, (index) => Container(
-                    height: 20.0,
-                    width: 50.0,
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
                     color: Colors.white,
-                  )),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 12,
+                      width: 100,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      height: 10,
+                      width: 80,
+                      color: Colors.white,
+                    ),
+                  ],
                 ),
               ],
             ),
-          );
-        },
+          ),
+          
+          // Image Shimmer
+          AspectRatio(
+            aspectRatio: 1.0,
+            child: Container(
+              color: Colors.white,
+            ),
+          ),
+          
+          // Actions Shimmer
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(width: 24, height: 24, color: Colors.white),
+                    const SizedBox(width: 16),
+                    Container(width: 24, height: 24, color: Colors.white),
+                    const SizedBox(width: 16),
+                    Container(width: 24, height: 24, color: Colors.white),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(height: 12, width: 80, color: Colors.white),
+                const SizedBox(height: 8),
+                Container(height: 12, width: double.infinity, color: Colors.white),
+                const SizedBox(height: 4),
+                Container(height: 12, width: 200, color: Colors.white),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

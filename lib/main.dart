@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:triptango/features/auth/presentation/providers/auth_provider.dart';
+import 'package:triptango/features/explore/presentation/providers/comments_provider.dart';
 import 'package:triptango/features/explore/presentation/providers/explore_provider.dart';
 import 'package:triptango/features/home/provider/home_provider.dart';
 import 'app_router.dart';
@@ -15,6 +16,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => ExploreProvider()),
+        ChangeNotifierProvider(create: (_) => CommentsProvider()),
       ],
       child: const MyApp(),
     ),

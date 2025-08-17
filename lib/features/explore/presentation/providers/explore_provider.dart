@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:triptango/core/services/api_service.dart';
-import 'package:triptango/features/explore/data/models/explore_trip_model.dart';
-
+import 'package:triptango/core/models/explore_trip_model.dart';
 class ExploreProvider extends ChangeNotifier {
   List<ExploreTrip> _trips = [];
   int _currentPage = 1;

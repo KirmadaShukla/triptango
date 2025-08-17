@@ -98,6 +98,24 @@ class ApiService {
     }
   }
 
+  static Future<Response> likeTrip(String tripId) async {
+    try {
+      return await ApiConfig().postRequest('/trip/likes/', data: {'trip': tripId});
+    } catch (e) {
+      debugPrint('Error occured $e');
+      rethrow;
+    }
+  }
+
+  static Future<Response> getComments(String tripId) async {
+    try {
+      return await ApiConfig().getRequest('/trip/comments/?trip_id=$tripId');
+    } catch (e) {
+      debugPrint('Error occured $e');
+      rethrow;
+    }
+  }
+
   static Future<Response> getExploreTrips(int page) async {
     try {
       return await ApiConfig().getRequest('/trip/explore/?page=$page');
